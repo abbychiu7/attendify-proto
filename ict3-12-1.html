@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UE | Attendify</title>
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <!-- Bootswatch Simplex Theme -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/simplex/bootstrap.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="#">attendify</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
+            aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html">Home</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="classes.html">Classes <span class="sr-only">(current)</span></a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Body -->
+    <div class="container mt-4">
+        <table class="table table-hover students-table">
+            <thead>
+              <tr>
+                <th scope="col">Student ID</th>
+                <th scope="col">Full Name</th>
+                <th scope="col">Date</th>
+                <th scope="col">Time</th>
+                <th scope="col">Status</th>
+              </tr>
+            </thead>
+            <tbody class="students-tbody">
+              
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+      
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyDCeUmwkfwh_x--Qotz_An2EyX9pEmIV7Q",
+          authDomain: "ue-attendify.firebaseapp.com",
+          projectId: "ue-attendify",
+          storageBucket: "ue-attendify.appspot.com",
+          messagingSenderId: "258233912155",
+          appId: "1:258233912155:web:1efd52936ffde4dfe5287e"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+      
+        async function getAll(db) {
+          const attendanceCollection = collection(db, 'ict3_12_1-1-1-2024');
+          const attendanceSnapshot = await getDocs(attendanceCollection);
+          const attendanceStudents = attendanceSnapshot.docs.map(doc => doc.data());
+          return attendanceStudents;
+        }
+      
+        getAll(db).then(students => {
+            var tableBody = document.getElementsByClassName("students-tbody")[0];
+            // Clear existing rows
+            tableBody.innerHTML = "";
+
+            // Iterate through the data array
+            students.forEach(function (student) {
+                var row = document.createElement("tr");
+                
+                if(student.status == "Present") {
+                    row.className = "table-success";
+                } else if(student.status == "Late") {
+                    row.className = "table-danger";
+                } else {
+                    row.className = "table-active";
+                }
+
+                // Create table cells and fill them with data
+                var fieldId = document.createElement("td");
+                fieldId.textContent = student.studentId;
+                fieldId.scope = "row";
+                row.appendChild(fieldId);
+
+                var fieldName = document.createElement("td");
+                fieldName.textContent = student.name;
+                row.appendChild(fieldName);
+
+                var fieldDate = document.createElement("td");
+                fieldDate.textContent = new Date().getMonth() + 1 + "/" + new Date().getDate() + "/" + new Date().getFullYear();
+                row.appendChild(fieldDate);
+
+                var fieldTime = document.createElement("td");
+                fieldTime.textContent = student.time;
+                row.appendChild(fieldTime);
+
+                var fieldStatus = document.createElement("td");
+                fieldStatus.textContent = student.status;
+                row.appendChild(fieldStatus);
+
+                // Append the row to the table body
+                tableBody.appendChild(row);
+            });
+        });
+      
+    </script>
+</body>
+
+</html>

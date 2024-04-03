@@ -1,0 +1,17 @@
+.navbar-brand {
+    font-size: 25px;
+    font-weight: bold;
+}
+.nav-item {
+    font-size: 20px;
+}
+.classes-buttons a {
+    font-size: 35px;
+    margin: 20px;
+}
+.students-table thead th {
+    font-size: 18px;
+}
+.students-table tbody tr {
+    font-size: 18px;
+}
