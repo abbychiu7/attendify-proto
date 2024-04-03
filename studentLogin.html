@@ -21,22 +21,43 @@
 
     <!-- Body -->
     <div class="container mt-4 d-flex justify-content-center">
-        <div class="card col-md-4">
+        <div class="card col-md-4" id="login-section">
             <div class="card-body">
                 <h3>Student Login</h3>
                 <h4><b>ICT3 12-1</b></h4>
                 <div class="mt-5">
-                    <div class="form-floating mb-3">
-                      <input type="email" class="form-control" id="floatingInput" placeholder="202400000000">
-                      <label for="floatingInput">Student ID</label>
-                    </div>
-                    <div class="form-floating">
-                      <input type="password" class="form-control" id="floatingPassword" placeholder="Password" autocomplete="off">
-                      <label for="floatingPassword">Password</label>
-                    </div>
-                    <div class="d-grid mt-3">
-                        <button class="btn btn-lg btn-primary" type="button">Submit</button>
-                    </div>
+                    <form id="attendanceForm">
+                        <div class="form-floating mb-3">
+                            <input type="text" class="form-control" id="studentId" placeholder="202400000000">
+                            <label for="studentId">Student ID</label>
+                          </div>
+                          <div class="form-floating">
+                            <input type="password" class="form-control" id="floatingPassword" placeholder="Password" autocomplete="off" required>
+                            <label for="floatingPassword">Password</label>
+                          </div>
+                          <div class="d-grid mt-3">
+                              <button class="btn btn-lg btn-primary" type="submit">Submit</button>
+                          </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="card col-md-4" id="success-section">
+            <div class="card-body">
+                <div class="alert alert-success">
+                    <h3><strong>Login Success</strong></h3>
+                </div>
+                <h4><b>ICT3 12-1</b></h4>
+                <div class="mt-4">
+                    <h4>Date & Time</h4>
+                    <h5><b><span id="success-field-dateTime"></span></b></h5>
+                    <br>
+                    <h4>Student ID</h4>
+                    <h5><b><span id="success-field-studentId"></span></b></h5>
+                    <h4>Name</h4>
+                    <h5><b><span id="success-field-name"></span></b></h5>
+                    <h4>Remarks</h4>
+                    <h5><b><span id="success-field-remarks"></span></b></h5>
                 </div>
             </div>
         </div>
@@ -46,6 +67,67 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="moment.min.js"></script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+      
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyDCeUmwkfwh_x--Qotz_An2EyX9pEmIV7Q",
+          authDomain: "ue-attendify.firebaseapp.com",
+          projectId: "ue-attendify",
+          storageBucket: "ue-attendify.appspot.com",
+          messagingSenderId: "258233912155",
+          appId: "1:258233912155:web:1efd52936ffde4dfe5287e"
+        };
+      
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+      
+        const attendanceForm = document.getElementById('attendanceForm');
+        const studentIdInput = document.getElementById('studentId');
+
+        // Function to insert attendance record into Firestore
+        async function markAttendance(studentId) {
+            const docRef = doc(db, "students", studentId);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                try {
+                    var currentTime = new Date();
+                    const docRef = await addDoc(collection(db, "ict3_12_1-1-1-2024"), {
+                        studentId: studentId,
+                        name: docSnap.data().name,
+                        time: currentTime,
+                        status: 'Present'
+                    });
+                    document.getElementById("success-field-dateTime").textContent = moment(currentTime).format('MMM d YYYY, h:mm a');
+                    document.getElementById("success-field-studentId").textContent = studentId;
+                    document.getElementById("success-field-name").textContent = docSnap.data().name;
+                    document.getElementById("success-field-remarks").textContent = 'Present';
+                    document.getElementById("login-section").style.display = 'none';
+                    document.getElementById("success-section").style.display = 'block';
+                    console.log("Document written with ID: ", docRef.id);
+                } catch (e) {
+                    console.error("Error adding document: ", e);
+                }
+            } else {
+                alert('Student ID not found');
+            }
+        }
+
+        // Event listener for form submission
+        attendanceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const studentId = studentIdInput.value.trim();
+            if (studentId !== '') {
+                markAttendance(studentId);
+            }
+        });
+    </script>
 </body>
 
 </html>

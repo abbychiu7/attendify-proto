@@ -26,11 +26,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="index.html">Home</a>
                 </li>
-                <li class="nav-item active">
-                    <a class="nav-link" href="classes.html">Classes <span class="sr-only">(current)</span></a>
-                </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="students.html">Students</a>
+                    <a class="nav-link" href="classes.html">Classes</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="students.html">Students <span class="sr-only">(current)</span></a>
                 </li>
             </ul>
         </div>
@@ -43,8 +43,6 @@
               <tr>
                 <th scope="col">Student ID</th>
                 <th scope="col">Full Name</th>
-                <th scope="col">Date Time</th>
-                <th scope="col">Status</th>
               </tr>
             </thead>
             <tbody class="students-tbody">
@@ -62,7 +60,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
       
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -79,10 +77,15 @@
         const db = getFirestore(app);
       
         async function getAll(db) {
-          const attendanceCollection = collection(db, 'ict3_12_1-1-1-2024');
-          const q = query(attendanceCollection, orderBy("time"));
+          const attendanceCollection = collection(db, 'students');
+          const q = query(attendanceCollection, orderBy("name"));
           const attendanceSnapshot = await getDocs(q);
-          const attendanceStudents = attendanceSnapshot.docs.map(doc => doc.data());
+          const attendanceStudents = attendanceSnapshot.docs.map(doc => {
+            return {
+              id: doc.id,
+              name: doc.data().name
+            };
+          });
           return attendanceStudents;
         }
       
@@ -94,32 +97,15 @@
             // Iterate through the data array
             students.forEach(function (student) {
                 var row = document.createElement("tr");
-                
-                if(student.status == "Present") {
-                    row.className = "table-success";
-                } else if(student.status == "Late") {
-                    row.className = "table-danger";
-                } else {
-                    row.className = "table-active";
-                }
-
                 // Create table cells and fill them with data
                 var fieldId = document.createElement("td");
-                fieldId.textContent = student.studentId;
+                fieldId.textContent = student.id;
                 fieldId.scope = "row";
                 row.appendChild(fieldId);
 
                 var fieldName = document.createElement("td");
                 fieldName.textContent = student.name;
                 row.appendChild(fieldName);
-
-                var fieldTime = document.createElement("td");
-                fieldTime.textContent = moment(student.time.toDate()).format('MMM d YYYY, h:mm a');
-                row.appendChild(fieldTime);
-
-                var fieldStatus = document.createElement("td");
-                fieldStatus.textContent = student.status;
-                row.appendChild(fieldStatus);
 
                 // Append the row to the table body
                 tableBody.appendChild(row);
