@@ -65,7 +65,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
       
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -81,53 +81,58 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
       
-        async function getAll(db) {
-          const attendanceCollection = collection(db, 'ict3_12_1-1-1-2024');
-          const q = query(attendanceCollection, orderBy("time"));
-          const attendanceSnapshot = await getDocs(q);
-          const attendanceStudents = attendanceSnapshot.docs.map(doc => doc.data());
-          return attendanceStudents;
+        async function getAll() {
+            const q = query(collection(db, "ict3_12_1-1-1-2024"), orderBy("time"));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const students = [];
+                var tableBody = document.getElementsByClassName("students-tbody")[0];
+                tableBody.innerHTML = "";
+                querySnapshot.forEach((doc) => {
+                    students.push({
+                        id: doc.id,
+                        name: doc.data().name,
+                        studentId: doc.data().studentId,
+                        time: doc.data().time,
+                        status: doc.data().status
+                    });
+                });
+                // Iterate through the data array
+                students.forEach(function (student) {
+                    var row = document.createElement("tr");
+                    
+                    if(student.status == "Present") {
+                        row.className = "table-success";
+                    } else if(student.status == "Late") {
+                        row.className = "table-danger";
+                    } else {
+                        row.className = "table-active";
+                    }
+
+                    // Create table cells and fill them with data
+                    var fieldId = document.createElement("td");
+                    fieldId.textContent = student.studentId;
+                    fieldId.scope = "row";
+                    row.appendChild(fieldId);
+
+                    var fieldName = document.createElement("td");
+                    fieldName.textContent = student.name;
+                    row.appendChild(fieldName);
+
+                    var fieldTime = document.createElement("td");
+                    fieldTime.textContent = moment(student.time.toDate()).format('MMM d YYYY, h:mm a');
+                    row.appendChild(fieldTime);
+
+                    var fieldStatus = document.createElement("td");
+                    fieldStatus.textContent = student.status;
+                    row.appendChild(fieldStatus);
+
+                    // Append the row to the table body
+                    tableBody.appendChild(row);
+                });
+            });
         }
       
-        getAll(db).then(students => {
-            var tableBody = document.getElementsByClassName("students-tbody")[0];
-            // Clear existing rows
-            tableBody.innerHTML = "";
-
-            // Iterate through the data array
-            students.forEach(function (student) {
-                var row = document.createElement("tr");
-                
-                if(student.status == "Present") {
-                    row.className = "table-success";
-                } else if(student.status == "Late") {
-                    row.className = "table-danger";
-                } else {
-                    row.className = "table-active";
-                }
-
-                // Create table cells and fill them with data
-                var fieldId = document.createElement("td");
-                fieldId.textContent = student.studentId;
-                fieldId.scope = "row";
-                row.appendChild(fieldId);
-
-                var fieldName = document.createElement("td");
-                fieldName.textContent = student.name;
-                row.appendChild(fieldName);
-
-                var fieldTime = document.createElement("td");
-                fieldTime.textContent = moment(student.time.toDate()).format('MMM d YYYY, h:mm a');
-                row.appendChild(fieldTime);
-
-                var fieldStatus = document.createElement("td");
-                fieldStatus.textContent = student.status;
-                row.appendChild(fieldStatus);
-
-                // Append the row to the table body
-                tableBody.appendChild(row);
-            });
-        });
+        getAll();
       
     </script>
 </body>

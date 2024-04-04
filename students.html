@@ -60,7 +60,7 @@
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getFirestore, collection, getDocs, query, orderBy, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
       
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -76,41 +76,38 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
       
-        async function getAll(db) {
-          const attendanceCollection = collection(db, 'students');
-          const q = query(attendanceCollection, orderBy("name"));
-          const attendanceSnapshot = await getDocs(q);
-          const attendanceStudents = attendanceSnapshot.docs.map(doc => {
-            return {
-              id: doc.id,
-              name: doc.data().name
-            };
-          });
-          return attendanceStudents;
+        async function getAll() {
+            const q = query(collection(db, "students"), orderBy("name"));
+            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+                const students = [];
+                var tableBody = document.getElementsByClassName("students-tbody")[0];
+                tableBody.innerHTML = "";
+                querySnapshot.forEach((doc) => {
+                    students.push({
+                        id: doc.id,
+                        name: doc.data().name
+                    });
+                });
+                // Iterate through the data array
+                students.forEach(function (student) {
+                    var row = document.createElement("tr");
+                    // Create table cells and fill them with data
+                    var fieldId = document.createElement("td");
+                    fieldId.textContent = student.id;
+                    fieldId.scope = "row";
+                    row.appendChild(fieldId);
+
+                    var fieldName = document.createElement("td");
+                    fieldName.textContent = student.name;
+                    row.appendChild(fieldName);
+
+                    // Append the row to the table body
+                    tableBody.appendChild(row);
+                });
+            });
         }
       
-        getAll(db).then(students => {
-            var tableBody = document.getElementsByClassName("students-tbody")[0];
-            // Clear existing rows
-            tableBody.innerHTML = "";
-
-            // Iterate through the data array
-            students.forEach(function (student) {
-                var row = document.createElement("tr");
-                // Create table cells and fill them with data
-                var fieldId = document.createElement("td");
-                fieldId.textContent = student.id;
-                fieldId.scope = "row";
-                row.appendChild(fieldId);
-
-                var fieldName = document.createElement("td");
-                fieldName.textContent = student.name;
-                row.appendChild(fieldName);
-
-                // Append the row to the table body
-                tableBody.appendChild(row);
-            });
-        });
+        getAll();
       
     </script>
 </body>
