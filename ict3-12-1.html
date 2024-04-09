@@ -40,6 +40,7 @@
     <div class="container mt-4">
         <div class="text-center my-4">
             <img src="qr.png" class="qr-code">
+            <h1 id="headCount"></h1>
         </div>
         <table class="table table-hover students-table">
             <thead>
@@ -96,6 +97,7 @@
                         status: doc.data().status
                     });
                 });
+                document.getElementById("headCount").textContent = students.length;
                 // Iterate through the data array
                 students.forEach(function (student) {
                     var row = document.createElement("tr");
