@@ -35,6 +35,10 @@
                             <input type="password" class="form-control" id="floatingPassword" placeholder="Password" autocomplete="off" required>
                             <label for="floatingPassword">Password</label>
                           </div>
+                          <div class="form-floating mt-3">
+                            <input type="checkbox" name="" id="" required>
+                            <label for="" class="text-justify font-italic">I confirm my physical attendance on this class and agree to the policy and guidelines of the UE Attendify System</label>
+                          </div>
                           <div class="d-grid mt-3">
                               <button class="btn btn-lg btn-primary" type="submit">Submit</button>
                           </div>
@@ -50,14 +54,12 @@
                 <h4><b>ICT3 12-1</b></h4>
                 <div class="mt-4">
                     <h4>Date & Time</h4>
-                    <h5><b><span id="success-field-dateTime"></span></b></h5>
+                    <h5><b><span id="success-field-dateTime">&nbsp;</span></b></h5>
                     <br>
                     <h4>Student ID</h4>
-                    <h5><b><span id="success-field-studentId"></span></b></h5>
+                    <h5><b><span id="success-field-studentId">&nbsp;</span></b></h5>
                     <h4>Name</h4>
-                    <h5><b><span id="success-field-name"></span></b></h5>
-                    <h4>Remarks</h4>
-                    <h5><b><span id="success-field-remarks"></span></b></h5>
+                    <h5><b><span id="success-field-name">&nbsp;</span></b></h5>
                 </div>
             </div>
         </div>
@@ -100,14 +102,11 @@
                     var currentTime = new Date();
                     const docRef = await addDoc(collection(db, "ict3_12_1-1-1-2024"), {
                         studentId: studentId,
-                        name: docSnap.data().name,
                         time: currentTime,
-                        status: 'Present'
                     });
-                    document.getElementById("success-field-dateTime").textContent = moment(currentTime).format('MMM d YYYY, h:mm a');
+                    document.getElementById("success-field-dateTime").textContent = moment(currentTime).format('MMMM D YYYY, h:mm A');
                     document.getElementById("success-field-studentId").textContent = studentId;
-                    document.getElementById("success-field-name").textContent = docSnap.data().name;
-                    document.getElementById("success-field-remarks").textContent = 'Present';
+                    document.getElementById("success-field-name").textContent = docSnap.data().firstName + ' ' + docSnap.data().middleInitial + '. ' + docSnap.data().lastName;
                     document.getElementById("login-section").style.display = 'none';
                     document.getElementById("success-section").style.display = 'block';
                     console.log("Document written with ID: ", docRef.id);

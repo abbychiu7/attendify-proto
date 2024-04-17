@@ -42,7 +42,9 @@
             <thead>
               <tr>
                 <th scope="col">Student ID</th>
-                <th scope="col">Full Name</th>
+                <th scope="col">Last Name</th>
+                <th scope="col">First Name</th>
+                <th scope="col">MI</th>
               </tr>
             </thead>
             <tbody class="students-tbody">
@@ -77,15 +79,17 @@
         const db = getFirestore(app);
       
         async function getAll() {
-            const q = query(collection(db, "students"), orderBy("name"));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const q = query(collection(db, "students"), orderBy("lastName"));
+            onSnapshot(q, (querySnapshot) => {
                 const students = [];
                 var tableBody = document.getElementsByClassName("students-tbody")[0];
                 tableBody.innerHTML = "";
                 querySnapshot.forEach((doc) => {
                     students.push({
                         id: doc.id,
-                        name: doc.data().name
+                        firstName: doc.data().firstName,
+                        lastName: doc.data().lastName,
+                        middleInitial: doc.data().middleInitial
                     });
                 });
                 // Iterate through the data array
@@ -97,9 +101,17 @@
                     fieldId.scope = "row";
                     row.appendChild(fieldId);
 
-                    var fieldName = document.createElement("td");
-                    fieldName.textContent = student.name;
-                    row.appendChild(fieldName);
+                    var fieldLastName = document.createElement("td");
+                    fieldLastName.textContent = student.lastName;
+                    row.appendChild(fieldLastName);
+
+                    var fieldFirstName = document.createElement("td");
+                    fieldFirstName.textContent = student.firstName;
+                    row.appendChild(fieldFirstName);
+
+                    var fieldMiddleInitial = document.createElement("td");
+                    fieldMiddleInitial.textContent = student.middleInitial;
+                    row.appendChild(fieldMiddleInitial);
 
                     // Append the row to the table body
                     tableBody.appendChild(row);

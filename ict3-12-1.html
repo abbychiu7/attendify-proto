@@ -39,34 +39,47 @@
     <!-- Body -->
     <div class="container mt-4">
         <div class="text-center my-4">
-            <img src="qr.png" class="qr-code">
-            <h1 id="headCount"></h1>
+            <img src="qr.png" class="qr-code" alt="">
+            <h1 id="headCount">0</h1>
         </div>
-        <table class="table table-hover students-table">
-            <thead>
-              <tr>
-                <th scope="col">Student ID</th>
-                <th scope="col">Full Name</th>
-                <th scope="col">Date Time</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody class="students-tbody">
-              
-            </tbody>
-        </table>
+        <div class="container">
+            <div class="d-grid">
+                <input
+                    type="datetime-local"
+                    id="start-time"
+                    name="start-time" />
+                <button class="btn btn-lg btn-outline-warning ml-2 float-right" type="button" id="reset-button">RESET</button>
+                <button class="btn btn-lg btn-outline-success ml-2 float-right" type="button" id="export-button">EXPORT</button>
+            </div>
+        </div>
+        <div class="container mt-4">
+            <table class="table table-hover students-table" id="students-table-attendance">
+                <thead>
+                  <tr>
+                    <th scope="col">Student ID</th>
+                    <th scope="col">Full Name</th>
+                    <th scope="col">Date Time</th>
+                    <th scope="col">Status</th>
+                  </tr>
+                </thead>
+                <tbody class="students-tbody">
+                  
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Bootstrap JS and jQuery -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="moment.min.js"></script>
 
     <script type="module">
         // Import the functions you need from the SDKs you need
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-app.js";
-        import { getFirestore, collection, getDocs, query, orderBy, onSnapshot } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
+        import { getFirestore, collection, query, orderBy, onSnapshot, deleteDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore.js";
       
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -81,38 +94,31 @@
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+
+        const currentTime = new Date();
+        document.getElementById("start-time").value = moment(currentTime).format('YYYY-MM-DDTHH:mm');
       
         async function getAll() {
-            const q = query(collection(db, "ict3_12_1-1-1-2024"), orderBy("time"));
-            const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const q = query(collection(db, "students"), orderBy("lastName"));
+            onSnapshot(q, (querySnapshot) => {
                 const students = [];
                 var tableBody = document.getElementsByClassName("students-tbody")[0];
                 tableBody.innerHTML = "";
                 querySnapshot.forEach((doc) => {
                     students.push({
                         id: doc.id,
-                        name: doc.data().name,
-                        studentId: doc.data().studentId,
-                        time: doc.data().time,
-                        status: doc.data().status
+                        name: doc.data().lastName + ", " + doc.data().firstName + " " + doc.data().middleInitial
                     });
                 });
                 document.getElementById("headCount").textContent = students.length;
                 // Iterate through the data array
                 students.forEach(function (student) {
                     var row = document.createElement("tr");
+                    row.id = 'tr-' + student.id;
                     
-                    if(student.status == "Present") {
-                        row.className = "table-success";
-                    } else if(student.status == "Late") {
-                        row.className = "table-danger";
-                    } else {
-                        row.className = "table-active";
-                    }
-
                     // Create table cells and fill them with data
                     var fieldId = document.createElement("td");
-                    fieldId.textContent = student.studentId;
+                    fieldId.textContent = student.id;
                     fieldId.scope = "row";
                     row.appendChild(fieldId);
 
@@ -121,11 +127,13 @@
                     row.appendChild(fieldName);
 
                     var fieldTime = document.createElement("td");
-                    fieldTime.textContent = moment(student.time.toDate()).format('MMM d YYYY, h:mm a');
+                    fieldTime.id = "time-" + student.id;
                     row.appendChild(fieldTime);
 
                     var fieldStatus = document.createElement("td");
-                    fieldStatus.textContent = student.status;
+                    fieldStatus.id = "status-" + student.id;
+                    fieldStatus.textContent = "Absent";
+                    fieldStatus.classList.add("text-primary");
                     row.appendChild(fieldStatus);
 
                     // Append the row to the table body
@@ -133,8 +141,103 @@
                 });
             });
         }
+
+        async function displayAttendance(){
+            const queryAttendance = query(collection(db, "ict3_12_1-1-1-2024"));
+            onSnapshot(queryAttendance, (querySnapshot) => {
+                const studentsAttendance = [];
+                querySnapshot.forEach((doc) => {
+                    let statusLabel = "";
+                    const studentTime = moment(doc.data().time.toDate());
+                    const startTime = moment(document.getElementById("start-time").value);
+                    let diffMinutes = studentTime.diff(startTime, 'minutes');
+                    if (Math.abs(diffMinutes) <= 10) {
+                        statusLabel = "Present";
+                    } else {
+                        statusLabel = "Late";
+                    }
+                    studentsAttendance.push({
+                        id: doc.id,
+                        studentId: doc.data().studentId,
+                        time: doc.data().time,
+                        status: statusLabel
+                    });
+                });
+                studentsAttendance.forEach(function (student) {
+                    var fieldTime = document.getElementById("time-" + student.studentId);
+                    fieldTime.textContent = moment(student.time.toDate()).format('MMMM D YYYY, h:mm A'); 
+                    var fieldStatus = document.getElementById("status-" + student.studentId);
+                    fieldStatus.textContent = student.status;
+                    var statusClass = student.status === "Present" ? "text-success" : "text-warning";
+                    fieldStatus.className = '';
+                    fieldStatus.classList.add(statusClass);
+                });                    
+            });
+        }
+
+        async function resetAttendance() {
+            const querySnapshot = await getDocs(collection(db, "ict3_12_1-1-1-2024"));
+            querySnapshot.forEach(async (doc) => {
+                await deleteDoc(doc.ref);
+            });
+            location.reload();
+        }
+
+        function handleResetClick() {
+            if(confirm("Are you sure you want to reset the attendance?")) {
+                resetAttendance();
+            }
+        }
+
+        function exportToCSV() {
+            const table = document.getElementById("students-table-attendance");
+            const csv = Papa.unparse(tableToData(table));
+            downloadCSV(csv);
+        }
+
+        function tableToData(table) {
+            const data = [];
+            const rows = table.querySelectorAll("tr");
+            for (let i = 0; i < rows.length; i++) {
+            const rowData = [];
+            const cols = rows[i].querySelectorAll("td, th");
+            for (let j = 0; j < cols.length; j++) {
+                rowData.push(cols[j].innerText);
+            }
+            data.push(rowData);
+            }
+            return data;
+        }
+
+        function downloadCSV(csv) {
+            const blob = new Blob([csv], { type: "text/csv" });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.setAttribute("href", url);
+            a.setAttribute("download", "ict3_12-1.csv");
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function updateStartTime() {
+            displayAttendance();
+        }
       
         getAll();
+        displayAttendance();
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const resetButton = document.getElementById("reset-button");
+            resetButton.addEventListener("click", handleResetClick);
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const resetButton = document.getElementById("export-button");
+            resetButton.addEventListener("click", exportToCSV);
+        });
+        document.addEventListener("DOMContentLoaded", function() {
+            const resetButton = document.getElementById("start-time");
+            resetButton.addEventListener("blur", updateStartTime);
+        });
       
     </script>
 </body>
